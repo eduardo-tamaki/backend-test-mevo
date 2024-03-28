@@ -1,73 +1,52 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Descrição do Teste Técnico
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Como começar
+- Faça um fork deste teste na sua conta do github.
+- Crie uma branch com o seu nome.
+- Realize commits com frequencia.
+- Faça um pull request para o nosso repositório ao final do teste. 
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Objetivo
+Implementar uma API REST que:
+- Receba um arquivo CSV contendo operações financeiras.
+- Realize validações específicas nas operações.
+- Registre as operações validadas em um banco de dados.
+- Gere um resumo das operações não validadas.
 
-## Description
+## Requisitos Funcionais
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Recebimento do Arquivo
+- A API deve oferecer um endpoint para o upload de arquivos CSV.
+- O arquivo deve seguir o formato especificado: `from;to;amount`.
 
-## Installation
+### Validações
+1. **Valores Negativos**: Operações com valores negativos são consideradas inválidas.
+2. **Operações Duplicadas**: Uma operação é duplicada se existir outra operação no arquivo com os mesmos valores de `to`, `from`, e `amount`. Tais operações são consideradas inválidas.
+3. **Valores Suspeitos**: Operações com valores acima de 50.000 são marcadas como suspeitas, mas ainda válidas para inclusão no banco de dados.
 
-```bash
-$ npm install
-```
+### Processamento do Arquivo
+- O arquivo deve ser lido e as operações devem ser validadas conforme as regras acima.
+- As operações validadas devem ser armazenadas em um banco  de dados (você decide).
+- Um resumo das operações não validadas (com o motivo da invalidade) deve ser gerado e armazenado no banco de dados juntamente com o nome do arquivo.
 
-## Running the app
+### Resposta da API
+Após o processamento do arquivo, a  API deve retornar uma resposta contendo:
+- Número de operações validadas e inseridas no banco de dados.
+- Resumo das operações não validadas, incluindo o motivo.
 
-```bash
-# development
-$ npm run start
+### Geraçao do Arquivo
+- Utilize o script transactionGenerator.js para gerar o arquivo com as transaçoes.
 
-# watch mode
-$ npm run start:dev
+### O que esperamos:
+- Uso de Node.js com TypeScript.
+- Aplicação de conceitos para a criação de uma API REST eficiente.
+- Estratégias para a solução de problemas em tempo real.
+- Capacidade de testar e validar sua solução.
+- Dockerização da aplicação (se possível dentro do tempo alocado).
+- Persistência em banco de dados.
 
-# production mode
-$ npm run start:prod
-```
-
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+### Critérios de Avaliação:
+- Testabilidade e Manutenibilidade.
+- Eficiência e Preparo para Escalabilidade.
+- Modularidade, Organização e Reutilização de Código.
+- A preocupação com segurança também será considerada um plus na sua solução.
