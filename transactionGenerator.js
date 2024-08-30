@@ -1,4 +1,3 @@
-
 const path = require('path');
 
 // Função para gerar um número aleatório com a quantidade de dígitos especificada
