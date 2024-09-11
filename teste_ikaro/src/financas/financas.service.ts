@@ -3,18 +3,21 @@ import * as xlsx from 'xlsx';
 import { CreateFinancaDto } from './dto/create-financa.dto';
 import { UpdateFinancaDto } from './dto/update-financa.dto';
 import { TrasactionsDto } from './dto/transaction.dto';
+import { TransactionInvalidDto } from './dto/transaction_invalida.dto';
 
 @Injectable()
 export class FinancasService {
   async create(filePath: string) {
-    const json = await this.converterFileInJson(filePath);
+    const { arrayNotValid, arrayValid } =
+      await this.converterFileInJson(filePath);
 
-    return json;
+    return {
+      arrayValid,
+      arrayNotValid,
+    };
   }
 
   async converterFileInJson(filePath: string) {
-   
-
     const sheet = xlsx.readFile(filePath);
 
     if (!sheet) {
@@ -27,58 +30,164 @@ export class FinancasService {
       sheet.Sheets[sheetNameList[0]],
     );
 
-    await this.validateOparations(jsonData);
+    const { arrayNotValid, arrayValid } =
+      await this.validateOparations(jsonData);
 
-    return jsonData;
+    return {
+      arrayValid,
+      arrayNotValid,
+    };
   }
-
-  
 
   async validateOparations(data: TrasactionsDto[]) {
+    const trancacoesDuplicates = this.searchDuplicates(data).map((index) => {
+      return {
+        from: index.from,
+        to: index.to,
+        amount: index.amount,
+        description: 'value_duplicated',
+      };
+    }) as TransactionInvalidDto[];
 
-    console.log(data.length)
-    const numbersAmountNegatives = data.filter((index) => {
-      if (index.amount < 0) {
-        return index;
-      } 
-    });
+    const numbersAmountNegatives = data
+      .filter((index) => {
+        if (index.amount < 0) {
+          return {
+            ...index,
+          };
+        }
+      })
+      .map((index) => {
+        return {
+          ...index,
+          description: 'value_negative',
+        };
+      }) as TransactionInvalidDto[];
 
-    const validateValorAcima  = data.filter((index) => {
-      if ((index.amount / 100) > 50000) {
-        return index;
-      } 
-    });
+    const validateValorAcima: TransactionInvalidDto[] = data
+      .filter((index) => {
+        if (index.amount / 100 > 50000) {
+          return {
+            ...index,
+          };
+        }
+        return;
+      })
+      .map((index) => {
+        return { ...index, description: 'value_above_limit' };
+      }) as TransactionInvalidDto[];
 
-    const trancaoesFromDuplicates = this.getDuplicates(data)
+    const valorAcima = this.separatorArrayDuplicatesAndValueAbove(
+      trancacoesDuplicates,
+      validateValorAcima,
+    );
 
-    // const duplicatedTransactionsid = 
+    console.log('Negative array', numbersAmountNegatives.length);
+    console.log('Acima do valor array', valorAcima.length);
+    console.log('Duplicated array', trancacoesDuplicates.length);
 
-    console.log('----------------------------------');
-    console.log('----------------------------------');
-    console.log(numbersAmountNegatives.length);
-    console.log(numbersAmountNegatives[0]);
-    console.log('----------------------------------');
-    console.log('----------------------------------');
-    console.log(validateValorAcima.length);
-    console.log(validateValorAcima[0]);
-    console.log('----------------------------------');
-    console.log('----------------------------------');
-    console.log(trancaoesFromDuplicates.length);
-    console.log(trancaoesFromDuplicates);
-    console.log('----------------------------------');
-    console.log('----------------------------------');
+    const arrayFinal = numbersAmountNegatives.concat(
+      valorAcima,
+      trancacoesDuplicates,
+    );
+
+    const dataFinal = this.separatorArrayValidAndNotValid(data, arrayFinal);
+
+    return {
+      arrayValid: dataFinal,
+      arrayNotValid: arrayFinal,
+    };
   }
-
-
-  getDuplicates(data:TrasactionsDto[], ) {
-    const map = {};
+  searchDuplicates(data: TrasactionsDto[]) {
     const duplicates = [];
 
-    const fromArray = data.map((index) => index.from)
+    const newData = data.map((index) => {
+      return {
+        ...index,
+        verificador: `${index.from}-${index.to}-${index.amount}`,
+      };
+    });
 
-    
+    for (let i = 0; i < data.length; i++) {
+      const { from, to, amount } = data[i];
+      const item = `${from}-${to}-${amount}`;
+
+      const filter = newData.filter((filter) => filter.verificador === item);
+
+      if (filter.length >= 2) {
+        duplicates.push(filter[0]);
+      }
+    }
 
     return duplicates;
-}
+  }
 
+  separatorArrayValidAndNotValid(
+    data: TrasactionsDto[],
+    dataNotValid: TransactionInvalidDto[],
+  ) {
+    const newData = data.map((index) => {
+      return {
+        ...index,
+        verificador: `${index.from}-${index.to}-${index.amount}`,
+      };
+    });
+    const newNotValidData = dataNotValid.map((index) => {
+      return {
+        ...index,
+        verificador: `${index.from}-${index.to}-${index.amount}`,
+      };
+    });
+
+    const dataValid: TrasactionsDto[] = newData.filter((filter) => {
+      if (
+        newNotValidData.some(
+          (some) => some.verificador === filter.verificador,
+        ) === false
+      ) {
+        return {
+          ...filter,
+        };
+      }
+    });
+
+    return dataValid;
+  }
+
+  separatorArrayDuplicatesAndValueAbove(
+    dataDuplicates: TransactionInvalidDto[],
+    dataValorAcima: TransactionInvalidDto[],
+  ) {
+ 
+    const newDuplicates = dataDuplicates.map((index) => {
+      return {
+        ...index,
+        verificador: `${index.from}-${index.to}-${index.amount}`,
+      };
+    });
+    const newDataValorAcima = dataValorAcima.map((index) => {
+      return {
+        ...index,
+        verificador: `${index.from}-${index.to}-${index.amount}`,
+      };
+    });
+
+    const dataAcimaValorFinal: TransactionInvalidDto[] = newDataValorAcima
+      .filter((filter) => {
+        if (
+          newDuplicates.some(
+            (some) => some.verificador === filter.verificador,
+          ) === false
+        ) {
+          return {
+            ...filter,
+          };
+        }
+      })
+      .map((index) => {
+        const { verificador, ...resto } = index;
+        return resto;
+      });
+    return dataAcimaValorFinal;
+  }
 }
