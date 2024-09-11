@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import * as xlsx from 'xlsx';
+import * as fs from 'fs';
 import { CreateFinancaDto } from './dto/create-financa.dto';
 import { UpdateFinancaDto } from './dto/update-financa.dto';
 import { TrasactionsDto } from './dto/transaction.dto';
@@ -32,6 +33,8 @@ export class FinancasService {
 
     const { arrayNotValid, arrayValid } =
       await this.validateOparations(jsonData);
+
+    this.deteleFile(filePath);
 
     return {
       arrayValid,
@@ -158,7 +161,6 @@ export class FinancasService {
     dataDuplicates: TransactionInvalidDto[],
     dataValorAcima: TransactionInvalidDto[],
   ) {
- 
     const newDuplicates = dataDuplicates.map((index) => {
       return {
         ...index,
@@ -189,5 +191,17 @@ export class FinancasService {
         return resto;
       });
     return dataAcimaValorFinal;
+  }
+
+  deteleFile(filePath: string) {
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log('--------------------------------');
+        console.log(`${filePath} deletado com sucesso.`);
+        console.log('--------------------------------');
+      }
+    });
   }
 }
