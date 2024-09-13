@@ -1,0 +1,22 @@
+{
+  "name": "mevo",
+  "version": "1.0.0",
+  "description": "## Como começar - Faça um fork deste teste na sua conta do github. - Crie uma branch com o seu nome. - Realize commits com frequencia.",
+  "main": "server.ts",
+  "scripts": {
+    "start": "ts-node src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.19.1",
+    "express": "^4.21.0",
+    "prisma": "^5.19.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
+  }
+}
