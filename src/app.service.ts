@@ -2,13 +2,20 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { parse } from 'csv-parse';
 import { Readable } from 'stream';
 
+interface FileLineDto {
+  from: string;
+  to: string;
+  amount: number;
+  alert?: string;
+  error?: string;
+}
+
 @Injectable()
 export class AppService {
   async importCsv(file: Express.Multer.File) {
     try {
       const records = await this.processCsv(file);
-      console.log('records: ', records);
-      return records;
+      return await this.processData(records);
     } catch (error) {
       throw error;
     }
@@ -35,5 +42,42 @@ export class AppService {
     });
   }
 
-  async validateFileRow(rowData) {}
+  async processData(records: FileLineDto[]) {
+    const validRows = [];
+    const invalidRows = [];
+    const suspectRows = [];
+    const uniqueRecordsMap = new Map<string, number>();
+
+    for (const record of records) {
+      const recordKey = `${record.from}-${record.to}-${record.amount}`;
+      uniqueRecordsMap.set(
+        recordKey,
+        (uniqueRecordsMap.get(recordKey) || 0) + 1,
+      );
+    }
+
+    for (const record of records) {
+      const recordKey = `${record.from}-${record.to}-${record.amount}`;
+      const uniqueCount = uniqueRecordsMap.get(recordKey) === 1;
+
+      if (record.amount < 0) {
+        invalidRows.push({ ...record, error: 'Valor negativo' });
+      } else if (!uniqueCount) {
+        invalidRows.push({ ...record, error: 'Registro duplicado' });
+      } else if (record.amount < 5000000) {
+        suspectRows.push({ ...record, alert: 'Valor suspeito' });
+      } else {
+        validRows.push(record);
+      }
+    }
+
+    const processedRows = [...validRows, ...suspectRows];
+
+    return {
+      validRows: validRows.length,
+      suspectRows: suspectRows.length,
+      invalidRows: invalidRows.length,
+      processedRows: processedRows.length,
+    };
+  }
 }
