@@ -15,6 +15,6 @@ export class AppController {
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
-    await this.appService.processCsv(file);
+    return await this.appService.importCsv(file);
   }
 }

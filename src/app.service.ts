@@ -1,71 +1,39 @@
-import { Injectable } from '@nestjs/common';
-import { validate } from 'class-validator';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { parse } from 'csv-parse';
+import { Readable } from 'stream';
 
 @Injectable()
 export class AppService {
-  async processCsv(file: Express.Multer.File): Promise<any> {
-    const bufferFile = file.buffer;
+  async importCsv(file: Express.Multer.File) {
+    try {
+      const records = await this.processCsv(file);
+      console.log('records: ', records);
+      return records;
+    } catch (error) {
+      throw error;
+    }
+  }
 
-    const parseData: any = await new Promise((resolve, reject) => {
-      csv.parser(
-        bufferFile,
-        {
-          columns: true,
-          relax_quotes: true,
-          skip_empty_lines: true,
-          cast: true,
-        },
-        (error, records) => {
-          if (error) {
-            reject(error);
-            return {
-              error: true,
-              message: 'Invalido para parse',
-            };
-          }
-          resolve(records);
-        },
-      );
+  async processCsv(file: Express.Multer.File): Promise<any[]> {
+    const bufferFile = Readable.from(file.buffer.toString());
+    const records = [];
 
-      const errors: string[] = [];
-      if (!parseData.length) {
-        errors.push('Arquivo vazio');
-        return {
-          error: true,
-          message: 'arquivo invalido',
-          errorsArray: errors,
-        };
-      }
-
-      for await (const [index, rowData] of parseData.entries()) {
-        const validationErros = await this.validateFileRow(rowData);
-
-        if (validationErros.length) {
-          return {
-            error: true,
-            errorsArray: validationErros,
-            message: 'Falha validação linha:' + (index + 1),
-          };
-        }
-      }
-
-      return {
-        errors: false,
-      };
+    return new Promise((resolve, reject) => {
+      bufferFile
+        .pipe(parse({ columns: true, delimiter: ';' }))
+        .on('data', (data) => {
+          records.push(data);
+        })
+        .on('end', () => resolve(records))
+        .on('error', (error) =>
+          reject(
+            new BadRequestException(
+              'Erro ao processar arquivo: ' + error.message,
+            ),
+          ),
+        );
     });
   }
 
-  async validateFileRow(rowData) {
-    const erros: string[] = [];
-    const csvDto = plainToInstance(CSVDTO, rowData);
-    const validationErros = await validate(csvDto);
-
-    if (validationErros.length > 0) {
-      validationErros.forEach((error) => {
-        const { property, constraints } = error;
-        const errorMessage = property + constraints.join(', ');
-        erros.push(errorMessage);
-      });
-    }
-  }
+  async validateFileRow(rowData) {}
 }
