@@ -82,9 +82,7 @@ export class AppService {
 
     const processedRows = [...validRows, ...suspectRows];
 
-    for (const row of processedRows) {
-      await this.purchasesService.create(row);
-    }
+    await this.purchasesService.insertMany(processedRows);
 
     await this.importsService.create({
       document_name: nameFile,

@@ -10,11 +10,11 @@ export class ImportsService {
   ) {}
 
   async create(createCatDto: any): Promise<Import> {
-    const createdCat = new this.purchaseModel({
+    const createdImport = new this.purchaseModel({
       ...createCatDto,
       created_at: new Date(),
     });
-    return createdCat.save();
+    return createdImport.save();
   }
 
   async findAll(): Promise<Import[]> {

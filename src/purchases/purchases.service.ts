@@ -10,11 +10,20 @@ export class PurchasesService {
   ) {}
 
   async create(createCatDto: any): Promise<Purchase> {
-    const createdCat = new this.purchaseModel({
+    const createdPurchase = new this.purchaseModel({
       ...createCatDto,
       created_at: new Date(),
     });
-    return createdCat.save();
+    return createdPurchase.save();
+  }
+
+  async insertMany(createCatDtos: any[]): Promise<Purchase[]> {
+    const createdPurchase = createCatDtos.map((dto) => ({
+      ...dto,
+      created_at: new Date(),
+    }));
+    const result = await this.purchaseModel.insertMany(createdPurchase);
+    return result as Purchase[];
   }
 
   async findAll(): Promise<Purchase[]> {
