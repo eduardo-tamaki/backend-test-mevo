@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   UseInterceptors,
+  Param,
   UploadedFile,
   ParseFilePipe,
   MaxFileSizeValidator,
@@ -15,9 +16,10 @@ import { AppService } from './app.service';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Post('upload')
+  @Post('upload/:token')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
+    @Param() params: { token: string },
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -30,6 +32,6 @@ export class AppController {
     )
     file: Express.Multer.File,
   ) {
-    return await this.appService.importCsv(file);
+    return await this.appService.importCsv(file, params.token);
   }
 }

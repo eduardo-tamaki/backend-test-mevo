@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { parse } from 'csv-parse';
 import { Readable } from 'stream';
 
@@ -20,7 +20,11 @@ export class AppService {
     private readonly importsService: ImportsService,
   ) {}
 
-  async importCsv(file: Express.Multer.File) {
+  async importCsv(file: Express.Multer.File, token: string) {
+    if (token !== process.env.UPLOAD_TOKEN) {
+      throw new UnauthorizedException('Token inválido');
+    }
+
     const nameFile = file.originalname;
     try {
       const records = await this.processCsv(file);
@@ -30,7 +34,7 @@ export class AppService {
     }
   }
 
-  async processCsv(file: Express.Multer.File): Promise<any[]> {
+  private async processCsv(file: Express.Multer.File): Promise<any[]> {
     const bufferFile = Readable.from(file.buffer.toString());
     const records = [];
 
@@ -51,7 +55,7 @@ export class AppService {
     });
   }
 
-  async processData(records: FileLineDto[], nameFile: string) { 
+  private async processData(records: FileLineDto[], nameFile: string) {
     const validRows = [];
     const invalidRows = [];
     const suspectRows = [];
@@ -83,13 +87,12 @@ export class AppService {
     const processedRows = [...validRows, ...suspectRows];
 
     await this.purchasesService.insertMany(processedRows);
-
     await this.importsService.create({
       document_name: nameFile,
       valid_rows: validRows.length,
       suspect_rows: suspectRows.length,
       invalid_rows: invalidRows.length,
-      processed_rows: processedRows.length
+      processed_rows: processedRows.length,
     });
 
     return {
