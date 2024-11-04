@@ -2,6 +2,8 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { parse } from 'csv-parse';
 import { Readable } from 'stream';
 
+import { PurchasesService } from './purchases/purchases.service';
+
 interface FileLineDto {
   from: string;
   to: string;
@@ -12,6 +14,8 @@ interface FileLineDto {
 
 @Injectable()
 export class AppService {
+  constructor(private readonly purchasesService: PurchasesService) {}
+
   async importCsv(file: Express.Multer.File) {
     try {
       const records = await this.processCsv(file);
@@ -64,7 +68,7 @@ export class AppService {
         invalidRows.push({ ...record, error: 'Valor negativo' });
       } else if (!uniqueCount) {
         invalidRows.push({ ...record, error: 'Registro duplicado' });
-      } else if (record.amount < 5000000) {
+      } else if (record.amount > 5000000) {
         suspectRows.push({ ...record, alert: 'Valor suspeito' });
       } else {
         validRows.push(record);
@@ -73,11 +77,24 @@ export class AppService {
 
     const processedRows = [...validRows, ...suspectRows];
 
+    for (const row of processedRows) {
+      await this.purchasesService.create(row);
+    }
+
     return {
-      validRows: validRows.length,
-      suspectRows: suspectRows.length,
-      invalidRows: invalidRows.length,
-      processedRows: processedRows.length,
+      validRows: {
+        count: validRows.length,
+      },
+      suspectRows: {
+        count: suspectRows.length,
+      },
+      invalidRows: {
+        count: invalidRows.length,
+        rows: invalidRows,
+      },
+      processedRows: {
+        count: processedRows.length,
+      },
     };
   }
 }
