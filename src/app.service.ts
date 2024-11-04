@@ -3,6 +3,7 @@ import { parse } from 'csv-parse';
 import { Readable } from 'stream';
 
 import { PurchasesService } from './purchases/purchases.service';
+import { ImportsService } from './imports/imports.service';
 
 interface FileLineDto {
   from: string;
@@ -14,12 +15,16 @@ interface FileLineDto {
 
 @Injectable()
 export class AppService {
-  constructor(private readonly purchasesService: PurchasesService) {}
+  constructor(
+    private readonly purchasesService: PurchasesService,
+    private readonly importsService: ImportsService,
+  ) {}
 
   async importCsv(file: Express.Multer.File) {
+    const nameFile = file.originalname;
     try {
       const records = await this.processCsv(file);
-      return await this.processData(records);
+      return await this.processData(records, nameFile);
     } catch (error) {
       throw error;
     }
@@ -46,7 +51,7 @@ export class AppService {
     });
   }
 
-  async processData(records: FileLineDto[]) {
+  async processData(records: FileLineDto[], nameFile: string) { 
     const validRows = [];
     const invalidRows = [];
     const suspectRows = [];
@@ -80,6 +85,14 @@ export class AppService {
     for (const row of processedRows) {
       await this.purchasesService.create(row);
     }
+
+    await this.importsService.create({
+      document_name: nameFile,
+      valid_rows: validRows.length,
+      suspect_rows: suspectRows.length,
+      invalid_rows: invalidRows.length,
+      processed_rows: processedRows.length
+    });
 
     return {
       validRows: {

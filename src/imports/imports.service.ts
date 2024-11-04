@@ -1,15 +1,15 @@
 import { Model } from 'mongoose';
 import { Injectable, Inject } from '@nestjs/common';
-import { Purchase } from './interfaces/purchase.interface';
+import { Import } from './interfaces/import.interface';
 
 @Injectable()
-export class PurchasesService {
+export class ImportsService {
   constructor(
-    @Inject('PURCHASE_MODEL')
-    private purchaseModel: Model<Purchase>,
+    @Inject('IMPORT_MODEL')
+    private purchaseModel: Model<Import>,
   ) {}
 
-  async create(createCatDto: any): Promise<Purchase> {
+  async create(createCatDto: any): Promise<Import> {
     const createdCat = new this.purchaseModel({
       ...createCatDto,
       created_at: new Date(),
@@ -17,7 +17,7 @@ export class PurchasesService {
     return createdCat.save();
   }
 
-  async findAll(): Promise<Purchase[]> {
+  async findAll(): Promise<Import[]> {
     return this.purchaseModel.find().exec();
   }
 }

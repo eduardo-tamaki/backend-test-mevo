@@ -1,7 +1,8 @@
 import * as mongoose from 'mongoose';
 
 export const PurchaseSchema = new mongoose.Schema({
-  do: String,
-  to: Number,
+  from: String,
+  to: String,
   amount: Number,
+  created_at: Date,
 });
