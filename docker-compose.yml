@@ -1,0 +1,44 @@
+services:
+  app:
+    build: .
+    container_name: mevo-app
+    env_file: .env
+    command: sh -c "npm i && npm run dev"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - database
+    volumes:
+      - .:/usr/src/app
+    networks:
+      - app-network
+
+  database:
+    image: postgres:latest
+    container_name: mevo-postgres
+    env_file: .env
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    networks:
+      - app-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: mevo-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - database
+    networks:
+      - app-network
+
+volumes:
+  pg-data:
+
+networks:
+  app-network:
