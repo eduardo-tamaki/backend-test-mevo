@@ -1,24 +1,31 @@
 import { Request, Response } from "express";
-import csvtojson from "csvtojson";
+import { CsvTransactionsAdapter } from "../adapter/csv-transactions.adapter";
+import { ImportCSVTransactionsUseCase } from "../use-case/import-csv-transactions.use-case";
 
 export class TransactionControler {
-  async importCSV(req: any, res: Response) {
-    console.log("req", req.file);
-
+  async importCSV(req: any, res: any) {
     if (!req.file.path) {
       res.status(400).json({
         message: "É necessário enviar o arquivo csv",
       });
     }
 
-    const csvFile = await csvtojson({
-      delimiter: ";",
-    }).fromFile(req.file.path);
+    const { error, transactionsAdapted } = await CsvTransactionsAdapter.execute(
+      req.file
+    );
 
-    console.log("Csv file", csvFile);
+    if (error) {
+      return res.status(400).json({
+        message: "Erro ao ler arquivo CSV",
+      });
+    }
 
-    return res.status(200).json({
-      message: "Deu tudo certo",
-    });
+    const importTransactionsUseCase = new ImportCSVTransactionsUseCase();
+
+    return await importTransactionsUseCase.execute(
+      req,
+      res,
+      transactionsAdapted
+    );
   }
 }
